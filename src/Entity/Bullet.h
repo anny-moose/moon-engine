@@ -23,7 +23,7 @@ private:
 public:
     explicit Bullet(Vector2 position, Vector2 destination_pos, bool is_friendly = true, float speed = BULLET_DEFAULT_SPEED,
                     Vector2 size = BULLET_DEFAULT_SIZE) : origin(position), speed(speed), is_friendly(is_friendly) {
-        hitbox = {position.x, position.y, size.x, size.y};
+        hitbox = {position.x-size.x/2, position.y-size.y/2, size.x, size.y};
 
         Vector2 dir_v = Vector2Subtract(destination_pos, position);
         direction = Vector2Normalize(dir_v);

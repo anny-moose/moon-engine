@@ -7,8 +7,8 @@ Camera2D* PlayerBehavior::camera = nullptr;
 
 void Entity::shoot_bullet(Vector2 end_pos, bool is_friendly) {
     if (reload_clock <= 0) {
-        Vector2 origin_pos = {(hitbox.x + hitbox.width / 2 - DEFAULT_BULLED_SIZE_PX.x/2),
-            (hitbox.y + hitbox.height / 2 - DEFAULT_BULLED_SIZE_PX.y/2)};
+        Vector2 origin_pos = {(hitbox.x + hitbox.width / 2),
+            (hitbox.y + hitbox.height / 2)};
 
         manager->append(Bullet(origin_pos, end_pos, is_friendly));
 
