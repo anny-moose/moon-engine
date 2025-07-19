@@ -23,7 +23,7 @@ void Entity::add_to_velocity(Vector2 increment) {
 }
 
 
-bool Entity::tick(GameMap &map, const Entity &player) {
+bool Entity::tick(GameMap &map) {
     for (const auto &wall: map.get_walls()) {
         if (CheckCollisionRecs(wall.bound, {hitbox.x + vel_x, hitbox.y, hitbox.width, hitbox.height})) {
             collision_x(hitbox, vel_x, {wall.bound.x, wall.bound.width});
@@ -36,7 +36,7 @@ bool Entity::tick(GameMap &map, const Entity &player) {
     reset_velocity();
 
     if (behavior != nullptr) {
-        if (!behavior->tick(*this, map, player)) return false;
+        if (!behavior->tick(*this, map)) return false;
     }
 
     reload_clock -= GetFrameTime();

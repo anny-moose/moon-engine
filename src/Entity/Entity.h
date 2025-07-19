@@ -20,7 +20,7 @@ constexpr float DEFAULT_BULLET_SPEED = 500.0f;
 class EntityBehavior {
 public:
     virtual void move(Entity &self, GameMap &map) = 0;
-    virtual bool tick(Entity &self, GameMap &map, const Entity &player) = 0; // false if mark for deletion
+    virtual bool tick(Entity &self, GameMap &map) = 0; // false if mark for deletion
     virtual ~EntityBehavior() = default;
 };
 
@@ -99,7 +99,9 @@ public:
 
 class EnemyBehavior final : public EntityBehavior {
 public:
+    static const Entity* player;
+
     void move(Entity &self, GameMap &map) override;
-    bool tick(Entity &self, GameMap &map, const Entity &player) override;
+    bool tick(Entity &self, GameMap &map) override;
     ~EnemyBehavior() = default;
 };

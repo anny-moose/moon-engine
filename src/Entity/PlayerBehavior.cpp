@@ -27,7 +27,7 @@ void PlayerBehavior::move(Entity &self, GameMap &map) {
     }
 }
 
-bool PlayerBehavior::tick(Entity &self, GameMap &map, const Entity &player) {
+bool PlayerBehavior::tick(Entity &self, GameMap &map) {
     for (auto colIt = map.get_triggers().begin(); colIt != map.get_triggers().end();) {
         bool proceed = true;
         if (CheckCollisionRecs(self.get_hitbox(), colIt->bound)) {

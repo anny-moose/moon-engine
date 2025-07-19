@@ -55,11 +55,11 @@ void Game::game_loop() {
         // Logic
 
         if (state == GameState::RUNNING) {
-            if (!player.tick(map, player)) state = GameState::PLAYER_DEAD;
+            if (!player.tick(map)) state = GameState::PLAYER_DEAD;
             bullet_manager.logic_tick(map.get_walls(), npcs, player);
             for (auto enemyIt = npcs.begin(); enemyIt != npcs.end();) {
-
-                if (!enemyIt->tick(map, player))
+                enemyIt->move(map);
+                if (!enemyIt->tick(map))
                     enemyIt = npcs.erase(enemyIt);
                 else
                     ++enemyIt;
