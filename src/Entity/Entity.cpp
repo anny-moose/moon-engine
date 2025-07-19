@@ -18,8 +18,8 @@ void Entity::shoot_bullet(Vector2 end_pos, bool is_friendly) {
 
 
 void Entity::add_to_velocity(Vector2 increment) {
-    vel_x += increment.x <= 500 ? increment.x : 500;
-    vel_y += increment.y <= 500 ? increment.y : 500;
+    vel_x = vel_x + increment.x <= 500 ? vel_x + increment.x : 500;
+    vel_y = vel_x + increment.y <= 500 ? vel_y + increment.y : 500;
 }
 
 
