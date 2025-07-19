@@ -28,7 +28,7 @@ bool Entity::tick(GameMap &map) {
         if (CheckCollisionRecs(wall.bound, {hitbox.x + vel_x, hitbox.y, hitbox.width, hitbox.height})) {
             collision_x(hitbox, vel_x, {wall.bound.x, wall.bound.width});
         } else if (CheckCollisionRecs(wall.bound, {hitbox.x, hitbox.y + vel_y, hitbox.width, hitbox.height})) {
-            collision_y(hitbox, vel_y, {wall.bound.y, wall.bound.width});
+            collision_y(hitbox, vel_y, {wall.bound.y, wall.bound.height});
         }
     }
     hitbox.x += vel_x;
