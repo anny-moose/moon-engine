@@ -10,7 +10,7 @@ void Entity::shoot_bullet(Vector2 end_pos, bool is_friendly) {
         Vector2 origin_pos = {(hitbox.x + hitbox.width / 2),
             (hitbox.y + hitbox.height / 2)};
 
-        manager->append(Bullet(origin_pos, end_pos, is_friendly));
+        manager->append(Bullet(origin_pos, end_pos, {vel_x, vel_y}, is_friendly));
 
         reload_clock = reload_time;
     }

@@ -7,7 +7,8 @@
 #include <memory>
 
 constexpr float BULLET_DEFAULT_SPEED = 500.0f;
-constexpr Vector2 BULLET_DEFAULT_SIZE = {24, 24};
+constexpr Vector2 BULLET_DEFAULT_SIZE = {12, 12};
+constexpr float BULLET_VELOCITY_BIAS = 0.04f;
 
 class Bullet {
 private:
@@ -21,12 +22,15 @@ private:
     bool is_friendly;
 
 public:
-    explicit Bullet(Vector2 position, Vector2 destination_pos, bool is_friendly = true, float speed = BULLET_DEFAULT_SPEED,
+    explicit Bullet(Vector2 position, Vector2 destination_pos, Vector2 velocity, bool is_friendly = true, float speed = BULLET_DEFAULT_SPEED,
                     Vector2 size = BULLET_DEFAULT_SIZE) : origin(position), speed(speed), is_friendly(is_friendly) {
         hitbox = {position.x-size.x/2, position.y-size.y/2, size.x, size.y};
 
         Vector2 dir_v = Vector2Subtract(destination_pos, position);
+
         direction = Vector2Normalize(dir_v);
+
+        direction += velocity*BULLET_VELOCITY_BIAS;
     }
 
     Rectangle get_hitbox() const { return hitbox; }
