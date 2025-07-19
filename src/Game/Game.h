@@ -19,7 +19,7 @@ private:
     Entity *focused_entity = &player;
 
     BulletManager bullet_manager;
-    std::vector<Entity> npcs;
+    std::vector<Entity> entities;
 
     GameMap map;
     GameState state = RUNNING;

@@ -1,9 +1,10 @@
 #include "Game.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 void Game::focus_entity(std::string entity_id) {
-    for (auto &entity: npcs) {
+    for (auto &entity: entities) {
         if (entity_id == entity.get_id()) {
             focused_entity = &entity;
         }
@@ -56,11 +57,11 @@ void Game::game_loop() {
 
         if (state == GameState::RUNNING) {
             if (!player.tick(map)) state = GameState::PLAYER_DEAD;
-            bullet_manager.logic_tick(map.get_walls(), npcs, player);
-            for (auto enemyIt = npcs.begin(); enemyIt != npcs.end();) {
+            bullet_manager.logic_tick(map.get_walls(), entities, player);
+            for (auto enemyIt = entities.begin(); enemyIt != entities.end();) {
                 enemyIt->move(map);
                 if (!enemyIt->tick(map))
-                    enemyIt = npcs.erase(enemyIt);
+                    enemyIt = entities.erase(enemyIt);
                 else
                     ++enemyIt;
             }
@@ -96,7 +97,7 @@ void Game::game_loop() {
                 DrawRectanglePro(bullet.get_hitbox(), {0, 0}, 0, WHITE);
             }
 
-            for (const auto &enemy: npcs) {
+            for (const auto &enemy: entities) {
                 DrawRectangle(enemy.get_position().x, enemy.get_position().y, enemy.get_size().x,
                               enemy.get_size().y, RED);
                 DrawText(std::format("Health: {}", enemy.get_health()).c_str(),
@@ -123,78 +124,54 @@ void Game::game_loop() {
 bool Game::load_entities_from_file(std::string file_path) {
     std::ifstream file(file_path);
 
-    if (!file) {
+    if (!file.is_open()) {
         std::cerr << "Failed to open file: " << file_path << std::endl;
         return false;
     }
 
-    npcs.clear();
+    entities.clear();
+    std::string line;
 
-    // i really cba to make it better
-    typedef struct {
-        std::string name;
-        Vector2 position;
-        Vector2 size;
-        int health;
-        float reload_time;
-    } entity_skeleton;
+    int numRun = 0;
 
-    entity_skeleton entity_temp;
-
-    bool firstRun = true;
-    bool negated = false;
-    bool comment = false;
-
-    bool readingName = false;
-    std::string name;
-
-    int currentNumber = 0;
-
-
-    char ch;
-    while (file.get(ch)) {
-        if (comment) {
-            if (ch != '/') {
-                continue;
-            }
-            comment = false;
+    while (std::getline(file, line)) {
+        // Skip empty or comment lines
+        if (line.empty() || line.find("//") == 0)
             continue;
+
+
+
+        // Split at @@ if it exists
+        size_t pos = line.find("@@");
+        std::string numberPart = line.substr(0, pos);
+        std::string entityName = (pos != std::string::npos) ? line.substr(pos + 2) : "";
+
+        // Parse numbers
+        std::istringstream iss(numberPart);
+        std::string token;
+        std::vector<float> values;
+
+        while (std::getline(iss, token, ',')) {
+            try {
+                values.push_back(std::stof(token));
+            } catch (const std::exception&) {
+                std::cerr << "Invalid number in line: " << line << std::endl;
+                return false;
+            }
         }
 
-        if (readingName) {
-           if (ch != '@') {
-               if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9'))
-                   name += ch;
-               continue;
-           }
-            readingName = false;
+        if (values.size() != 3) {
+            std::cerr << "Expected 3 numbers in line: " << line << std::endl;
+            return false;
         }
 
-        else if (ch == '-') {
-            negated = true;
-        } else if (ch >= '0' && ch <= '9') {
-            currentNumber = currentNumber * 10 + ch - '0';
-        } else if (ch == ',') {
-            entity_temp.position.x = negated ? -currentNumber*50 : currentNumber*50;
-            currentNumber = 0;
-            negated = false;
-        } else if (ch == ';') {
-            entity_temp.position.y = negated ? -currentNumber*50 : currentNumber*50;
-            currentNumber = 0;
-            negated = false;
-        } else if (ch == '/') comment = true;
-        else if (ch == '@') {
-            readingName = true;
-        } else {
-            entity_temp.health = currentNumber;
-            entity_temp.name = name;
-            name.clear();
-            if (firstRun) player = Entity(std::make_unique<PlayerBehavior>(), entity_temp.position, entity_temp.name, DEFAULT_ENTITY_SIZE_PX, entity_temp.health);
-            else npcs.emplace_back(std::make_unique<EnemyBehavior>(), entity_temp.position, entity_temp.name, DEFAULT_ENTITY_SIZE_PX, entity_temp.health);
-            entity_temp = {};
-            currentNumber = 0;
-            firstRun = false;
-        }
+        if (numRun == 0)
+            player = Entity(std::make_unique<PlayerBehavior>(), {values[0]*50, values[1]*50}, entityName, DEFAULT_ENTITY_SIZE_PX, values[2]);
+        else
+            entities.emplace_back(Entity(std::make_unique<EnemyBehavior>(), {values[0]*50, values[1]*50}, entityName, DEFAULT_ENTITY_SIZE_PX, values[2]));
+
+        numRun++;
     }
+
     return true;
 }
