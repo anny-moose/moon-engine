@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "raylib.h"
+#include "raymath.h"
 #include "../Game/Map.h"
 #include <string>
 
@@ -12,10 +13,7 @@ class Entity;
 constexpr Vector2 DEFAULT_ENTITY_SIZE_PX = {50, 50};
 constexpr float DEFAULT_RELOAD_TIME_SECOND = 0.50f;
 constexpr int DEFAULT_HEALTH_VALUE = 100;
-
-constexpr Vector2 DEFAULT_BULLED_SIZE_PX = {24, 24};
-constexpr float DEFAULT_BULLET_SPEED = 500.0f;
-
+constexpr float DEFAULT_SPEED_VALUE = 300.0f;
 
 class EntityBehavior {
 public:
@@ -30,6 +28,7 @@ private:
     Rectangle hitbox;
     int health;
 
+    float speed;
     float vel_x;
     float vel_y;
 
@@ -38,12 +37,12 @@ private:
 
     bool is_frozen = false;
 
-    std::unique_ptr<EntityBehavior> behavior; //replace with unique_ptr or just EntityBehavior if/when behaviors have their own states
+    std::unique_ptr<EntityBehavior> behavior;
 
 
 public:
-    explicit Entity(std::unique_ptr<EntityBehavior> behavior, Vector2 position, std::string id = "", Vector2 size = DEFAULT_ENTITY_SIZE_PX, int health = DEFAULT_HEALTH_VALUE, float reload_time = DEFAULT_RELOAD_TIME_SECOND)
-    : id(id), health(health), reload_time(reload_time), behavior(std::move(behavior)) {
+    explicit Entity(std::unique_ptr<EntityBehavior> behavior, Vector2 position, std::string id = "", Vector2 size = DEFAULT_ENTITY_SIZE_PX, int health = DEFAULT_HEALTH_VALUE, float reload_time = DEFAULT_RELOAD_TIME_SECOND, float speed = DEFAULT_SPEED_VALUE)
+    : id(std::move(id)), health(health), reload_time(reload_time), behavior(std::move(behavior)), speed(speed) {
         hitbox.x = position.x;
         hitbox.y = position.y;
         hitbox.width = size.x;
@@ -64,15 +63,17 @@ public:
     void set_health(int new_health) { health = new_health; }
     int get_health() const { return health; }
 
+    static BulletManager* manager;
+
+    static Game* game;
+
+    float get_speed() const { return speed; }
+    void add_to_velocity(Vector2 increment);
+
     void reset_velocity() {
         vel_x = 0;
         vel_y = 0;
     }
-
-    static BulletManager* manager;
-    static Game* game;
-
-    void add_to_velocity(Vector2 increment);
 
     bool can_shoot() const { return reload_clock <= 0; }
     void reset_reload_clock() { reload_clock = reload_time; }
@@ -99,9 +100,12 @@ public:
 
 class EnemyBehavior final : public EntityBehavior {
 private:
-    float line_of_sight_length = 1000;
+    float line_of_sight_length = 500;
     bool player_visible = false;
     Vector2 player_center;
+
+    float locked_on_timer = 0.0f;
+    Vector2 movement_direction = Vector2Zero();
 public:
     static const Entity* player;
 

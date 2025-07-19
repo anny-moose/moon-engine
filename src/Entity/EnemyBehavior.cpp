@@ -1,3 +1,5 @@
+#include <mutex>
+
 #include "Entity.h"
 #include "raymath.h"
 #include "../Physics/Collision.h"
@@ -8,6 +10,13 @@ const Entity* EnemyBehavior::player = nullptr;
 void EnemyBehavior::move(Entity &self, GameMap &map) {
     if (player_visible) {
         self.shoot_bullet(player_center, false);
+
+        movement_direction = Vector2Normalize(Vector2Subtract(player->get_position(), self.get_position()));
+    }
+
+    if (locked_on_timer > 0) {
+
+        self.add_to_velocity(movement_direction*self.get_speed()*GetFrameTime());
     }
 }
 
@@ -31,5 +40,10 @@ bool EnemyBehavior::tick(Entity &self, GameMap &map) {
     // Assign to actual variable v
     player_visible = can_shoot_player;
 
+    if (player_visible) {
+        locked_on_timer = 1.5f;
+    }
+
+    locked_on_timer -= GetFrameTime();
     return true;
 }

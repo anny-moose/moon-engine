@@ -5,20 +5,19 @@ Game* Entity::game = nullptr;
 
 void PlayerBehavior::move(Entity &self, GameMap &map) {
     float delta = GetFrameTime();
-    float speed = 300.0f;
 
     if (!self.get_frozen_state()) {
         if (IsKeyDown(KEY_W)) {
-            self.add_to_velocity({0,-(speed * delta)});
+            self.add_to_velocity({0,-(self.get_speed() * delta)});
         }
         if (IsKeyDown(KEY_A)) {
-            self.add_to_velocity({-(speed * delta), 0});
+            self.add_to_velocity({-(self.get_speed() * delta), 0});
         }
         if (IsKeyDown(KEY_S)) {
-            self.add_to_velocity({0, (speed*delta)});
+            self.add_to_velocity({0, (self.get_speed()*delta)});
         }
         if (IsKeyDown(KEY_D)) {
-            self.add_to_velocity({(speed*delta), 0});
+            self.add_to_velocity({(self.get_speed()*delta), 0});
         }
     }
 
