@@ -2,6 +2,8 @@
 #include "raymath.h"
 #include "../Physics/Collision.h"
 
+const Entity* EnemyBehavior::player = nullptr;
+
 // AI goes here
 void EnemyBehavior::move(Entity &self, GameMap &map) {
     if (player_visible) {
@@ -14,16 +16,20 @@ bool EnemyBehavior::tick(Entity &self, GameMap &map) {
 
     player_center = player->get_position() + player->get_size()/2;
 
-// Maybe implement a private member `bool sees_player` and move shooting into method `move()` ?
-bool EnemyBehavior::tick(Entity &self, GameMap &map, const Entity &player) {
-    bool can_shoot = true;
-    if (Vector2Distance(self.get_position(), player.get_position()) < 1000) {
+    bool can_shoot_player = true;
+    // Assume we see player ^
+
+    // Check whether we do v
+    if (Vector2Distance(self.get_position(), player_center) < line_of_sight_length) {
         for (const auto &wall: map.get_walls())
-            if (wall.CheckCollisionLine(player.get_position(), self.get_position()))
-                can_shoot = false;
-        if (can_shoot)
-            self.shoot_bullet(player.get_position(), false);
+            if (wall.CheckCollisionLine(player_center, self.get_position()))
+                can_shoot_player = false;
+    } else {
+        can_shoot_player = false;
     }
+
+    // Assign to actual variable v
+    player_visible = can_shoot_player;
 
     return true;
 }

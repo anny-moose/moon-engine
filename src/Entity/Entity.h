@@ -82,7 +82,7 @@ public:
 
     void move(GameMap &map) { if (behavior != nullptr) behavior->move(*this, map); }
     void shoot_bullet(Vector2 end_pos, bool is_friendly = true);
-    bool tick(GameMap &map, const Entity &player);
+    bool tick(GameMap &map);
 };
 
 
@@ -92,12 +92,16 @@ public:
 
     void move(Entity &self, GameMap &map) override;
 
-    bool tick(Entity &self, GameMap &map, const Entity &player) override;
+    bool tick(Entity &self, GameMap &map) override;
     ~PlayerBehavior() = default;
 };
 
 
 class EnemyBehavior final : public EntityBehavior {
+private:
+    float line_of_sight_length = 1000;
+    bool player_visible = false;
+    Vector2 player_center;
 public:
     static const Entity* player;
 

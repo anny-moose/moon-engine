@@ -30,6 +30,7 @@ public:
     explicit Game() : player(Entity(nullptr, {0, 0})) {
         Entity::manager = &bullet_manager;
         Entity::game = this;
+        EnemyBehavior::player = &player;
         PlayerBehavior::camera = &camera;
     }
 
