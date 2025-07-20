@@ -32,6 +32,5 @@ public:
     const std::vector<Wall>& get_walls() const { return walls; }
     std::vector<TriggerArea>& get_triggers() { return triggers; }
 
-    bool load_walls_from_file(std::string file_name);
-    bool load_triggers_from_file(std::string file_name);
+    bool load_map_from_file(std::string file_name);
 };

@@ -1,7 +1,8 @@
 #include "Game.h"
 #include <iostream>
 #include <fstream>
-#include <sstream>
+#include "../../lib/json.hpp"
+using json = nlohmann::json;
 
 void Game::focus_entity(std::string entity_id) {
     for (auto &entity: entities) {
@@ -22,9 +23,8 @@ int Game::run() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib C++ App");
     SetTargetFPS(240);
 
-    map.load_walls_from_file("map.txt");
-    map.load_triggers_from_file("areas.txt");
-    load_entities_from_file("entities.txt");
+    map.load_map_from_file("map.json");
+    load_entities_from_file("entities.json");
 
     camera.target = {
         focused_entity->get_position().x + focused_entity->get_size().x / 2,
@@ -43,7 +43,6 @@ int Game::run() {
 }
 
 void Game::game_loop() {
-
     while (!WindowShouldClose()) {
         // Events
         player.move(map);
@@ -92,7 +91,8 @@ void Game::game_loop() {
             DrawText("Hello, Raylib!", 350, 280, 20, DARKGRAY);
 
             DrawRectangle(player.get_position().x, player.get_position().y,
-                          player.get_size().x, player.get_size().y, (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color) {0, 77, 4, 255});
+                          player.get_size().x, player.get_size().y,
+                          (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color){0, 77, 4, 255});
             DrawText(std::format("Health: {}", player.get_health()).c_str(),
                      player.get_position().x - 20, player.get_position().y - 20, 20, GREEN);
 
@@ -102,31 +102,28 @@ void Game::game_loop() {
 
             for (const auto &enemy: entities) {
                 DrawRectangle(enemy.get_position().x, enemy.get_position().y, enemy.get_size().x,
-                              enemy.get_size().y, (enemy.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
+                              enemy.get_size().y,
+                              (enemy.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
                 DrawText(std::format("Health: {}", enemy.get_health()).c_str(),
                          enemy.get_position().x - 20, enemy.get_position().y - 20, 20, RED);
             }
 
             for (const auto &wall: map.get_walls()) {
-                DrawRectanglePro(wall.bound, {0,0}, 0, BLUE);
+                DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
             }
 
             EndMode2D();
-        }
-
-
-        else if (state == GameState::PLAYER_DEAD) {
+        } else if (state == GameState::PLAYER_DEAD) {
             DrawText("you losar", 350, 280, 80, DARKGRAY);
         } else if (state == GameState::GAME_WON) {
             DrawText("you winrar", 350, 280, 80, DARKGRAY);
         }
 
-        DrawRectangle(GetMousePosition().x-12, GetMousePosition().y-12, 24, 24, WHITE);
+        DrawRectangle(GetMousePosition().x - 12, GetMousePosition().y - 12, 24, 24, WHITE);
 
         EndDrawing();
     }
 }
-
 
 
 bool Game::load_entities_from_file(std::string file_path) {
@@ -137,55 +134,14 @@ bool Game::load_entities_from_file(std::string file_path) {
         return false;
     }
 
+    json data = json::parse(file);
+
+    player = Entity(std::make_unique<PlayerBehavior>(), {data["player"]["position"][0].template get<float>() * 50, data["player"]["position"][1].template get<float>() * 50}, "player");
+
     entities.clear();
-    std::string line;
 
-    int numRun = 0;
-
-    while (std::getline(file, line)) {
-        // Skip empty or comment lines
-        if (line.empty() || line.find("//") == 0)
-            continue;
-
-        EnemyType type = EnemyType::NORMAL;
-        int startPos = 0;
-
-        if (line.starts_with('!')) {
-            type = EnemyType::WARDEN;
-            startPos = 1;
-        }
-
-        // Split at @@ if it exists
-        size_t pos = line.find("@@");
-        std::string numberPart = line.substr(startPos, pos);
-        std::string entityName = (pos != std::string::npos) ? line.substr(pos + 2) : "";
-
-        // Parse numbers
-        std::istringstream iss(numberPart);
-        std::string token;
-        std::vector<float> values;
-
-        while (std::getline(iss, token, ',')) {
-            try {
-                values.push_back(std::stof(token));
-            } catch (const std::exception&) {
-                std::cerr << "Invalid number in line: " << line << std::endl;
-                return false;
-            }
-        }
-
-        if (values.size() != 3) {
-            std::cerr << "Expected 3 numbers in line: " << line << std::endl;
-            return false;
-        }
-
-        if (numRun == 0)
-            player = Entity(std::make_unique<PlayerBehavior>(), {values[0]*50, values[1]*50}, entityName, DEFAULT_ENTITY_SIZE_PX, values[2]);
-        else
-            entities.emplace_back(Entity(std::make_unique<EnemyBehavior>(type), {values[0]*50, values[1]*50}, entityName, DEFAULT_ENTITY_SIZE_PX, values[2]));
-
-        numRun++;
-    }
+    for (auto it : data["entities"])
+        entities.emplace_back(Entity(std::make_unique<EnemyBehavior>((it["type"] == "warding") ? EnemyType::WARDEN : EnemyType::NORMAL), {it["position"][0].template get<float>() * 50, it["position"][1].template get<float>() * 50}, it["id"], DEFAULT_ENTITY_SIZE_PX, it["health"]));
 
     return true;
 }

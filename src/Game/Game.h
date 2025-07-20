@@ -7,7 +7,6 @@
 typedef enum {
     MENU = 0,
     RUNNING,
-    DIALOGUE,
     PLAYER_DEAD,
     GAME_WON,
 } GameState;
