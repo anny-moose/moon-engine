@@ -4,13 +4,14 @@
 #include "raymath.h"
 #include "../Physics/Collision.h"
 
-const Entity* EnemyBehavior::player = nullptr;
+const Entity *EnemyBehavior::player = nullptr;
 
 // AI goes here
 void EnemyBehavior::move(Entity &self, GameMap &map) {
-    if (locked_on_timer > 0) {
-        self.add_to_velocity(movement_direction*self.get_speed()*GetFrameTime());
-    }
+    if (type != EnemyType::WARDEN)
+        if (locked_on_timer > 0) {
+            self.add_to_velocity(movement_direction * self.get_speed() * GetFrameTime());
+        }
 
     if (player_visible) {
         self.shoot_bullet(player_center, false);
@@ -21,14 +22,13 @@ void EnemyBehavior::move(Entity &self, GameMap &map) {
 
 
 bool EnemyBehavior::tick(Entity &self, GameMap &map) {
-
-    player_center = player->get_position() + player->get_size()/2;
+    player_center = player->get_position() + player->get_size() / 2;
 
     bool can_shoot_player = true;
     // Assume we see player ^
 
     // Check whether we do v
-    if (Vector2Distance(self.get_position() + self.get_size()/2, player_center) < line_of_sight_length) {
+    if (Vector2Distance(self.get_position() + self.get_size() / 2, player_center) < line_of_sight_length) {
         for (const auto &wall: map.get_walls())
             if (wall.CheckCollisionLine(player_center, self.get_position()))
                 can_shoot_player = false;

@@ -1,5 +1,7 @@
 #include "Bullet.h"
 
+constexpr float DEFAULT_INVULNERABILITY_TIME = 0.5f;
+
 void Bullet::move_bullet() {
     Vector2 increment = direction * speed * GetFrameTime();
 
@@ -17,13 +19,19 @@ bool Bullet::tick(const std::vector<Wall> &walls, std::vector<Entity> &enemies, 
     if (is_friendly) {
         for (auto &enemy: enemies) {
             if (CheckCollisionRecs(hitbox, enemy.get_hitbox())) {
-                enemy.set_health(enemy.get_health() - 10);
+                if (!(enemy.get_invulnerability_time() > 0)) {
+                    enemy.set_health(enemy.get_health() - 10);
+                    enemy.set_invulnerability_time(DEFAULT_INVULNERABILITY_TIME);
+                }
                 return false;
             }
         }
     } else {
         if (CheckCollisionRecs(hitbox, player.get_hitbox())) {
-            player.set_health(player.get_health() -  10);
+            if (!(player.get_invulnerability_time() > 0)) {
+                player.set_health(player.get_health() - 10);
+                player.set_invulnerability_time(DEFAULT_INVULNERABILITY_TIME);
+            }
             return false;
         }
     }

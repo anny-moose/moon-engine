@@ -26,6 +26,8 @@ class Entity {
 private:
     std::string id;
     Rectangle hitbox;
+
+    int health_max;
     int health;
 
     float speed;
@@ -37,12 +39,12 @@ private:
 
     bool is_frozen = false;
 
+    float invulnerability_time = 0.0f;
+
     std::unique_ptr<EntityBehavior> behavior;
-
-
 public:
     explicit Entity(std::unique_ptr<EntityBehavior> behavior, Vector2 position, std::string id = "", Vector2 size = DEFAULT_ENTITY_SIZE_PX, int health = DEFAULT_HEALTH_VALUE, float reload_time = DEFAULT_RELOAD_TIME_SECOND, float speed = DEFAULT_SPEED_VALUE)
-    : id(std::move(id)), health(health), reload_time(reload_time), behavior(std::move(behavior)), speed(speed) {
+    : id(std::move(id)), health_max(health), health(health), reload_time(reload_time), behavior(std::move(behavior)), speed(speed) {
         hitbox.x = position.x;
         hitbox.y = position.y;
         hitbox.width = size.x;
@@ -63,6 +65,8 @@ public:
     void set_health(int new_health) { health = new_health; }
     int get_health() const { return health; }
 
+    int get_max_health() const { return health_max; }
+
     static BulletManager* manager;
 
     static Game* game;
@@ -81,6 +85,9 @@ public:
     bool get_frozen_state() const { return is_frozen; }
     void set_frozen_state(bool new_state) { is_frozen = new_state; }
 
+    void set_invulnerability_time(float new_time) { invulnerability_time = new_time; }
+    float get_invulnerability_time() const { return invulnerability_time; }
+
     void move(GameMap &map) { if (behavior != nullptr) behavior->move(*this, map); }
     void shoot_bullet(Vector2 end_pos, bool is_friendly = true);
     bool tick(GameMap &map);
@@ -98,8 +105,15 @@ public:
 };
 
 
+typedef enum {
+    NORMAL = 0,
+    WARDEN,
+} EnemyType;
+
 class EnemyBehavior final : public EntityBehavior {
 private:
+    EnemyType type;
+
     float line_of_sight_length = 500;
     bool player_visible = false;
     Vector2 player_center;
@@ -107,6 +121,8 @@ private:
     float locked_on_timer = 0.0f;
     Vector2 movement_direction = Vector2Zero();
 public:
+    explicit EnemyBehavior(EnemyType type = EnemyType::NORMAL) : type(type) {}
+
     static const Entity* player;
 
     void move(Entity &self, GameMap &map) override;

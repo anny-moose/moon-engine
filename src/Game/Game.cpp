@@ -20,7 +20,7 @@ int Game::run() {
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib C++ App");
-    SetTargetFPS(60);
+    SetTargetFPS(240);
 
     map.load_walls_from_file("map.txt");
     map.load_triggers_from_file("areas.txt");
@@ -33,6 +33,7 @@ int Game::run() {
     camera.offset = {SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
     camera.zoom = 1.0f;
 
+    HideCursor();
 
     game_loop();
 
@@ -67,6 +68,8 @@ void Game::game_loop() {
             }
         }
 
+        if (entities.empty()) state = GameState::GAME_WON;
+
         const float smoothness = 0.1f;
         camera.target +=
         {
@@ -89,7 +92,7 @@ void Game::game_loop() {
             DrawText("Hello, Raylib!", 350, 280, 20, DARKGRAY);
 
             DrawRectangle(player.get_position().x, player.get_position().y,
-                          player.get_size().x, player.get_size().y, DARKGREEN);
+                          player.get_size().x, player.get_size().y, (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color) {0, 77, 4, 255});
             DrawText(std::format("Health: {}", player.get_health()).c_str(),
                      player.get_position().x - 20, player.get_position().y - 20, 20, GREEN);
 
@@ -99,7 +102,7 @@ void Game::game_loop() {
 
             for (const auto &enemy: entities) {
                 DrawRectangle(enemy.get_position().x, enemy.get_position().y, enemy.get_size().x,
-                              enemy.get_size().y, RED);
+                              enemy.get_size().y, (enemy.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
                 DrawText(std::format("Health: {}", enemy.get_health()).c_str(),
                          enemy.get_position().x - 20, enemy.get_position().y - 20, 20, RED);
             }
@@ -111,9 +114,14 @@ void Game::game_loop() {
             EndMode2D();
         }
 
+
         else if (state == GameState::PLAYER_DEAD) {
             DrawText("you losar", 350, 280, 80, DARKGRAY);
+        } else if (state == GameState::GAME_WON) {
+            DrawText("you winrar", 350, 280, 80, DARKGRAY);
         }
+
+        DrawRectangle(GetMousePosition().x-12, GetMousePosition().y-12, 24, 24, WHITE);
 
         EndDrawing();
     }
@@ -139,11 +147,17 @@ bool Game::load_entities_from_file(std::string file_path) {
         if (line.empty() || line.find("//") == 0)
             continue;
 
+        EnemyType type = EnemyType::NORMAL;
+        int startPos = 0;
 
+        if (line.starts_with('!')) {
+            type = EnemyType::WARDEN;
+            startPos = 1;
+        }
 
         // Split at @@ if it exists
         size_t pos = line.find("@@");
-        std::string numberPart = line.substr(0, pos);
+        std::string numberPart = line.substr(startPos, pos);
         std::string entityName = (pos != std::string::npos) ? line.substr(pos + 2) : "";
 
         // Parse numbers
@@ -168,7 +182,7 @@ bool Game::load_entities_from_file(std::string file_path) {
         if (numRun == 0)
             player = Entity(std::make_unique<PlayerBehavior>(), {values[0]*50, values[1]*50}, entityName, DEFAULT_ENTITY_SIZE_PX, values[2]);
         else
-            entities.emplace_back(Entity(std::make_unique<EnemyBehavior>(), {values[0]*50, values[1]*50}, entityName, DEFAULT_ENTITY_SIZE_PX, values[2]));
+            entities.emplace_back(Entity(std::make_unique<EnemyBehavior>(type), {values[0]*50, values[1]*50}, entityName, DEFAULT_ENTITY_SIZE_PX, values[2]));
 
         numRun++;
     }

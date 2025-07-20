@@ -1,23 +1,23 @@
 #include "Entity.h"
 #include "../Game/Game.h"
 
-Game* Entity::game = nullptr;
+Game *Entity::game = nullptr;
 
 void PlayerBehavior::move(Entity &self, GameMap &map) {
     float delta = GetFrameTime();
 
     if (!self.get_frozen_state()) {
         if (IsKeyDown(KEY_W)) {
-            self.add_to_velocity({0,-(self.get_speed() * delta)});
+            self.add_to_velocity({0, -(self.get_speed() * delta)});
         }
         if (IsKeyDown(KEY_A)) {
             self.add_to_velocity({-(self.get_speed() * delta), 0});
         }
         if (IsKeyDown(KEY_S)) {
-            self.add_to_velocity({0, (self.get_speed()*delta)});
+            self.add_to_velocity({0, (self.get_speed() * delta)});
         }
         if (IsKeyDown(KEY_D)) {
-            self.add_to_velocity({(self.get_speed()*delta), 0});
+            self.add_to_velocity({(self.get_speed() * delta), 0});
         }
     }
 
@@ -34,15 +34,23 @@ bool PlayerBehavior::tick(Entity &self, GameMap &map) {
                 self.set_frozen_state(!self.get_frozen_state());
                 colIt = map.get_triggers().erase(colIt);
                 proceed = false;
-            }
-            else if (colIt->action == Action::FOCUS_CAMERA) {
+            } else if (colIt->action == Action::FOCUS_CAMERA) {
                 Entity::game->focus_entity(colIt->action_opt);
             }
-                               }
+        }
         if (proceed) {
             ++colIt;
         }
     }
+
+    if (self.get_invulnerability_time() < -2.5f) {
+        if (self.get_health() <= self.get_max_health())
+            self.set_health(self.get_health() + 10);
+        self.set_invulnerability_time(0);
+    }
+
+    if (self.get_health() > self.get_max_health())
+        self.set_health(self.get_max_health());
 
     return true;
 }

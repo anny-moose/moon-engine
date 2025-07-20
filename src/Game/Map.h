@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-typedef struct {
+typedef struct Wall {
     Rectangle bound;
     bool CheckCollisionLine(Vector2 p1, Vector2 p2) const;
 } Wall;

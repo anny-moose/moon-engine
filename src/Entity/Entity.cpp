@@ -40,6 +40,7 @@ bool Entity::tick(GameMap &map) {
     }
 
     reload_clock -= GetFrameTime();
+    invulnerability_time -= GetFrameTime();
 
     if (health <= 0) return false;
 
