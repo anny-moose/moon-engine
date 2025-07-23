@@ -55,4 +55,5 @@ public:
 
     int run();
     void game_loop();
+    void render_step();
 };

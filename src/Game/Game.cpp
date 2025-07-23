@@ -93,52 +93,55 @@ void Game::game_loop() {
         };
         camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 
-        // Rendering
-        BeginDrawing();
-        ClearBackground(BLACK);
 
-        if (state == MENU) {
-            main_menu.draw_element();
-        } else if (state == RUNNING) {
-            BeginMode2D(camera);
-
-            DrawText("Hello, Raylib!", 350, 280, 20, DARKGRAY);
-
-            DrawRectangle(player.get_position().x, player.get_position().y,
-                          player.get_size().x, player.get_size().y,
-                          (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color){0, 77, 4, 255});
-            DrawText(std::format("Health: {}", player.get_health()).c_str(),
-                     player.get_position().x - 20, player.get_position().y - 20, 20, GREEN);
-
-            for (const auto &bullet: *bullet_manager.get_bullets()) {
-                DrawRectanglePro(bullet.get_hitbox(), {0, 0}, 0, WHITE);
-            }
-
-            for (const auto &enemy: entities) {
-                DrawRectangle(enemy.get_position().x, enemy.get_position().y, enemy.get_size().x,
-                              enemy.get_size().y,
-                              (enemy.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
-                DrawText(std::format("Health: {}", enemy.get_health()).c_str(),
-                         enemy.get_position().x - 20, enemy.get_position().y - 20, 20, RED);
-            }
-
-            for (const auto &wall: map.get_walls()) {
-                DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
-            }
-
-            EndMode2D();
-        } else if (state == PLAYER_DEAD) {
-            DrawText("you losar", 350, 280, 80, DARKGRAY);
-        } else if (state == GAME_WON) {
-            DrawText("you winrar", 350, 280, 80, DARKGRAY);
-        }
-
-        DrawRectangle(GetMousePosition().x - 12, GetMousePosition().y - 12, 24, 24, WHITE);
-
-        EndDrawing();
+        render_step();
     }
 }
 
+void Game::render_step() {
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    if (state == MENU) {
+        main_menu.draw_element();
+    } else if (state == RUNNING) {
+        BeginMode2D(camera);
+
+        DrawText("Hello, Raylib!", 350, 280, 20, DARKGRAY);
+
+        DrawRectangle(player.get_position().x, player.get_position().y,
+                      player.get_size().x, player.get_size().y,
+                      (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color){0, 77, 4, 255});
+        DrawText(std::format("Health: {}", player.get_health()).c_str(),
+                 player.get_position().x - 20, player.get_position().y - 20, 20, GREEN);
+
+        for (const auto &bullet: *bullet_manager.get_bullets()) {
+            DrawRectanglePro(bullet.get_hitbox(), {0, 0}, 0, WHITE);
+        }
+
+        for (const auto &enemy: entities) {
+            DrawRectangle(enemy.get_position().x, enemy.get_position().y, enemy.get_size().x,
+                          enemy.get_size().y,
+                          (enemy.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
+            DrawText(std::format("Health: {}", enemy.get_health()).c_str(),
+                     enemy.get_position().x - 20, enemy.get_position().y - 20, 20, RED);
+        }
+
+        for (const auto &wall: map.get_walls()) {
+            DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
+        }
+
+        EndMode2D();
+    } else if (state == PLAYER_DEAD) {
+        DrawText("you losar", 350, 280, 80, DARKGRAY);
+    } else if (state == GAME_WON) {
+        DrawText("you winrar", 350, 280, 80, DARKGRAY);
+    }
+
+    DrawRectangle(GetMousePosition().x - 12, GetMousePosition().y - 12, 24, 24, WHITE);
+
+    EndDrawing();
+}
 
 bool Game::load_entities_from_file(std::string file_path) {
     std::ifstream file(file_path);
