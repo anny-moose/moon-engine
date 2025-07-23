@@ -26,6 +26,10 @@ private:
     GameMap map;
     GameState state = MENU;
 
+    Entity joe = Entity(std::make_unique<NPCBehavior>(std::map<std::string, std::string>{{"joe", "yo gurt"}, {"player", "wtf?"}}), {100,100}, "joe", {50,50});
+
+    NPCBehavior* npc_behavior = nullptr;
+
     Camera2D camera = { 0 };
 
     bool game_should_close = false;
@@ -35,7 +39,7 @@ public:
         Entity::manager = &bullet_manager;
         Entity::game = this;
         UIElement::game = this;
-        EnemyBehavior::player = &player;
+        EntityBehavior::player = &player;
         PlayerBehavior::camera = &camera;
 
         main_menu.emplace_back(Button({240, 120, 240, 120}, [](Game& game){game.set_game_state(RUNNING);}, "play game"));
@@ -52,6 +56,7 @@ public:
     bool load_entities_from_file(std::string file_path);
 
     void set_game_state(GameState new_state) {state = new_state;}
+    void set_dialogue(NPCBehavior* npc) {npc_behavior = npc;}
 
     int run();
     void game_loop();

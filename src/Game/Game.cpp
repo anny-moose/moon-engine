@@ -13,6 +13,8 @@ void Game::focus_entity(const std::string &entity_id) {
     }
     if (entity_id == player.get_id())
         focused_entity = &player;
+    else if (entity_id == joe.get_id())
+        focused_entity = &joe;
 }
 
 
@@ -72,7 +74,13 @@ void Game::game_loop() {
                 else
                     ++enemyIt;
             }
+
+            if (!joe.tick(map)) {
+                npc_behavior = nullptr;
+            }
         }
+
+
 
         if (state == MENU) {
             main_menu.set_bounds((Rectangle){10, (float)GetScreenHeight() - 200, (float)GetScreenWidth()-20, 190});
@@ -131,7 +139,13 @@ void Game::render_step() {
             DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
         }
 
+        DrawRectanglePro(joe.get_hitbox(), {0, 0}, 0, BLUE);
+
         EndMode2D();
+
+        if (npc_behavior != nullptr)
+            npc_behavior->draw_dialogue();
+
     } else if (state == PLAYER_DEAD) {
         DrawText("you losar", 350, 280, 80, DARKGRAY);
     } else if (state == GAME_WON) {

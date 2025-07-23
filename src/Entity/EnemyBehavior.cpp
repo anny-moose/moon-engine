@@ -4,7 +4,7 @@
 #include "raymath.h"
 #include "../Physics/Collision.h"
 
-const Entity *EnemyBehavior::player = nullptr;
+const Entity *EntityBehavior::player = nullptr;
 
 // AI goes here
 void EnemyBehavior::move(Entity &self, GameMap &map) {

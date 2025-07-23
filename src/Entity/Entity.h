@@ -1,9 +1,11 @@
 #pragma once
+#include <map>
 #include <memory>
 #include "raylib.h"
 #include "raymath.h"
 #include "../Game/Map.h"
 #include <string>
+#include <utility>
 
 class Game;
 class BulletManager;
@@ -17,6 +19,8 @@ constexpr float DEFAULT_SPEED_VALUE = 300.0f;
 
 class EntityBehavior {
 public:
+    static const Entity* player;
+
     virtual void move(Entity &self, GameMap &map) = 0;
     virtual bool tick(Entity &self, GameMap &map) = 0; // false if mark for deletion
     virtual ~EntityBehavior() = default;
@@ -70,6 +74,7 @@ public:
     static BulletManager* manager;
 
     static Game* game;
+    Game& get_game() { return *game; }
 
     float get_speed() const { return speed; }
     void add_to_velocity(Vector2 increment);
@@ -123,9 +128,23 @@ private:
 public:
     explicit EnemyBehavior(EnemyType type = EnemyType::NORMAL) : type(type) {}
 
-    static const Entity* player;
+//    static const Entity* player;
 
     void move(Entity &self, GameMap &map) override;
     bool tick(Entity &self, GameMap &map) override;
     ~EnemyBehavior() = default;
+};
+
+
+class NPCBehavior final : public EntityBehavior {
+    std::map<std::string, std::string> dialogue_text;
+    std::map<std::string, std::string>::const_iterator current_dialogue = dialogue_text.begin();
+    bool talking = false;
+    float timer = 0.1f;
+public:
+    explicit NPCBehavior(std::map<std::string, std::string> dialogue_text) : dialogue_text(std::move(dialogue_text)) {}
+
+    void move(Entity &self, GameMap &map) override {};
+    bool tick(Entity &self, GameMap &map) override;
+    void draw_dialogue();
 };
