@@ -1,10 +1,11 @@
 #include "Game.h"
 #include <iostream>
 #include <fstream>
+#include "UI/UIElement.h"
 #include "../../lib/json.hpp"
 using json = nlohmann::json;
 
-void Game::focus_entity(std::string entity_id) {
+void Game::focus_entity(const std::string &entity_id) {
     for (auto &entity: entities) {
         if (entity_id == entity.get_id()) {
             focused_entity = &entity;
@@ -20,6 +21,7 @@ int Game::run() {
     const int SCREEN_HEIGHT = 600;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib C++ App");
     SetTargetFPS(240);
 
@@ -43,9 +45,15 @@ int Game::run() {
 }
 
 void Game::game_loop() {
-    while (!WindowShouldClose()) {
+    while (!game_should_close && !WindowShouldClose()) {
         // Events
-        player.move(map);
+
+        if (state == RUNNING) {
+            player.move(map);
+            for (auto &enemyIt: entities) {
+                enemyIt.move(map);
+            }
+        }
 
         if (IsKeyPressed(KEY_P)) {
             // freeze_player_toggle(map.player);
@@ -55,11 +63,10 @@ void Game::game_loop() {
 
         // Logic
 
-        if (state == GameState::RUNNING) {
-            if (!player.tick(map)) state = GameState::PLAYER_DEAD;
+        if (state == RUNNING) {
+            if (!player.tick(map)) set_game_state(PLAYER_DEAD);
             bullet_manager.logic_tick(map.get_walls(), entities, player);
             for (auto enemyIt = entities.begin(); enemyIt != entities.end();) {
-                enemyIt->move(map);
                 if (!enemyIt->tick(map))
                     enemyIt = entities.erase(enemyIt);
                 else
@@ -67,7 +74,12 @@ void Game::game_loop() {
             }
         }
 
-        if (entities.empty()) state = GameState::GAME_WON;
+        if (state == MENU) {
+            main_menu.set_bounds((Rectangle){10, (float)GetScreenHeight() - 200, (float)GetScreenWidth()-20, 190});
+            main_menu.update_element();
+        }
+
+        if (entities.empty()) state = GAME_WON;
 
         const float smoothness = 0.1f;
         camera.target +=
@@ -85,7 +97,9 @@ void Game::game_loop() {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        if (state == GameState::RUNNING) {
+        if (state == MENU) {
+            main_menu.draw_element();
+        } else if (state == RUNNING) {
             BeginMode2D(camera);
 
             DrawText("Hello, Raylib!", 350, 280, 20, DARKGRAY);
@@ -113,9 +127,9 @@ void Game::game_loop() {
             }
 
             EndMode2D();
-        } else if (state == GameState::PLAYER_DEAD) {
+        } else if (state == PLAYER_DEAD) {
             DrawText("you losar", 350, 280, 80, DARKGRAY);
-        } else if (state == GameState::GAME_WON) {
+        } else if (state == GAME_WON) {
             DrawText("you winrar", 350, 280, 80, DARKGRAY);
         }
 
@@ -136,12 +150,18 @@ bool Game::load_entities_from_file(std::string file_path) {
 
     json data = json::parse(file);
 
-    player = Entity(std::make_unique<PlayerBehavior>(), {data["player"]["position"][0].template get<float>() * 50, data["player"]["position"][1].template get<float>() * 50}, "player");
+    player = Entity(std::make_unique<PlayerBehavior>(), {
+                        data["player"]["position"][0].template get<float>() * 50,
+                        data["player"]["position"][1].template get<float>() * 50
+                    }, "player");
 
     entities.clear();
 
-    for (auto it : data["entities"])
-        entities.emplace_back(Entity(std::make_unique<EnemyBehavior>((it["type"] == "warding") ? EnemyType::WARDEN : EnemyType::NORMAL), {it["position"][0].template get<float>() * 50, it["position"][1].template get<float>() * 50}, it["id"], DEFAULT_ENTITY_SIZE_PX, it["health"]));
+    for (auto it: data["entities"])
+        entities.emplace_back(Entity(
+            std::make_unique<EnemyBehavior>((it["type"] == "warding") ? EnemyType::WARDEN : EnemyType::NORMAL), {
+                it["position"][0].template get<float>() * 50, it["position"][1].template get<float>() * 50
+            }, it["id"], DEFAULT_ENTITY_SIZE_PX, it["health"]));
 
     return true;
 }
