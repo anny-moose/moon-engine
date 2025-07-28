@@ -6,6 +6,8 @@
 
 #include "raylib.h"
 
+constexpr float TEXT_SPEED_DEFAULT = 0.05f;
+
 class Game;
 
 class UIElement {
@@ -79,6 +81,10 @@ public:
 class DialogueBox : public UIElement {
 private:
     std::string text;
+    std::string displayed_text;
+    int text_idx = 0;
+
+    float text_speed = TEXT_SPEED_DEFAULT;
 
     float font_size = 10;
     Vector2 text_pos;

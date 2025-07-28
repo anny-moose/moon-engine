@@ -18,15 +18,16 @@ void Button::update_element() {
 
     if (screen_resolution.x != GetScreenWidth() || screen_resolution.y != GetScreenHeight()) {
         font_size = 10;
-        while (cmp_vec2({bounds.width/2, bounds.height/2}, MeasureTextEx(GetFontDefault(), text.c_str(), font_size, 1))) {
+        while (cmp_vec2({bounds.width / 2, bounds.height / 2},
+                        MeasureTextEx(GetFontDefault(), text.c_str(), font_size, 1))) {
             font_size += 1;
         }
 
 
         Vector2 text_size = MeasureTextEx(GetFontDefault(), text.c_str(), font_size, 1.0f);
         text_pos = {
-            bounds.x + (bounds.width/2 - text_size.x/2),
-            bounds.y + (bounds.height/2 - text_size.y/2)
+            bounds.x + (bounds.width / 2 - text_size.x / 2),
+            bounds.y + (bounds.height / 2 - text_size.y / 2)
         };
 
         screen_resolution = {static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())};
@@ -45,17 +46,17 @@ void Button::draw_element() {
 void Container::update_element() {
     if (direction == HORIZONTAL) {
         float x_current = bounds.x;
-        float width = bounds.width - 20*(elements.size()-1);
+        float width = bounds.width - 20 * (elements.size() - 1);
         for (auto &element: elements) {
-            element->set_bounds({x_current, bounds.y, width/elements.size(), bounds.height});
-            x_current += width/elements.size() + 20;
+            element->set_bounds({x_current, bounds.y, width / elements.size(), bounds.height});
+            x_current += width / elements.size() + 20;
         }
     } else {
         float y_current = bounds.y;
-        float height = bounds.height - 20*(elements.size()-1);
+        float height = bounds.height - 20 * (elements.size() - 1);
         for (auto &element: elements) {
-            element->set_bounds({bounds.x, y_current, bounds.width, height/elements.size()});
-            y_current += height/elements.size() + 20;
+            element->set_bounds({bounds.x, y_current, bounds.width, height / elements.size()});
+            y_current += height / elements.size() + 20;
         }
     }
 
@@ -73,28 +74,34 @@ void Container::draw_element() {
 
 void DialogueBox::update_element() {
     if (text != "")
-    if (screen_resolution.x != GetScreenWidth() || screen_resolution.y != GetScreenHeight()) {
-        font_size = 10;
-        while (cmp_vec2({bounds.width/2, bounds.height/2}, MeasureTextEx(GetFontDefault(), text.c_str(), font_size, 2))) {
-            font_size += 1;
-            if (font_size == 50) break;
+        if (screen_resolution.x != GetScreenWidth() || screen_resolution.y != GetScreenHeight()) {
+            font_size = 10;
+            while (cmp_vec2({bounds.width / 2, bounds.height / 2},
+                            MeasureTextEx(GetFontDefault(), displayed_text.c_str(), font_size, 2))) {
+                font_size += 1;
+                if (font_size == 50) break;
+            }
+
+            screen_resolution = {static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())};
         }
 
-
-        Vector2 text_size = MeasureTextEx(GetFontDefault(), text.c_str(), font_size, 2.0f);
+    if (text_speed <= 0) {
+        Vector2 text_size = MeasureTextEx(GetFontDefault(), displayed_text.c_str(), font_size, 2.0f);
         text_pos = {
-            bounds.x + (bounds.width/2 - text_size.x/2),
-            bounds.y + (bounds.height/2 - text_size.y/2)
+            bounds.x + (bounds.width / 2 - text_size.x / 2),
+            bounds.y + (bounds.height / 2 - text_size.y / 2)
         };
 
-        screen_resolution = {static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())};
+        displayed_text = text.substr(0, text_idx++);
+        text_speed = TEXT_SPEED_DEFAULT;
     }
+
+    text_speed -= GetFrameTime();
 }
 
 void DialogueBox::draw_element() {
     DrawRectangleRoundedLinesEx(bounds, 0.5f, 16, 10.0f, WHITE);
     DrawRectangleRounded(bounds, 0.5f, 16, BLACK);
 
-    DrawTextEx(GetFontDefault(), text.c_str(), text_pos, font_size, 2, WHITE);
+    DrawTextEx(GetFontDefault(), displayed_text.c_str(), text_pos, font_size, 2, WHITE);
 }
-
