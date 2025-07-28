@@ -4,9 +4,11 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "../Game/Map.h"
+#include "../Game/UI/UIElement.h"
 #include <string>
 #include <utility>
 
+class DialogueBox;
 class Game;
 class BulletManager;
 class Entity;
@@ -137,12 +139,13 @@ public:
 
 
 class NPCBehavior final : public EntityBehavior {
-    std::map<std::string, std::string> dialogue_text;
-    std::map<std::string, std::string>::const_iterator current_dialogue = dialogue_text.begin();
+    std::vector<std::pair<std::string, std::string>> dialogue_text;
+    std::vector<std::pair<std::string, std::string>>::const_iterator current_dialogue = dialogue_text.begin();
     bool talking = false;
     float timer = 0.1f;
+    DialogueBox box = DialogueBox({0,0,0,0});
 public:
-    explicit NPCBehavior(std::map<std::string, std::string> dialogue_text) : dialogue_text(std::move(dialogue_text)) {}
+    explicit NPCBehavior(std::vector<std::pair<std::string, std::string>> dialogue_text) : dialogue_text(std::move(dialogue_text)) {}
 
     void move(Entity &self, GameMap &map) override {};
     bool tick(Entity &self, GameMap &map) override;

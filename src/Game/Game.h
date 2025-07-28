@@ -16,21 +16,22 @@ typedef enum {
 class Game {
 private:
     Entity player;
-    Entity *focused_entity = &player;
+    const Entity *focused_entity = &player;
 
-    ButtonContainer main_menu = ButtonContainer({200, 200, 700, 100});
+    Container main_menu = Container({200, 200, 700, 100}, VERTICAL);
 
     BulletManager bullet_manager;
-    std::vector<Entity> entities;
+    std::vector<Entity> enemies;
+
+    std::vector<Entity> npcs;
 
     GameMap map;
     GameState state = MENU;
 
-    Entity joe = Entity(std::make_unique<NPCBehavior>(std::map<std::string, std::string>{{"joe", "yo gurt"}, {"player", "wtf?"}}), {100,100}, "joe", {50,50});
 
-    NPCBehavior* npc_behavior = nullptr;
+    NPCBehavior *npc_behavior = nullptr;
 
-    Camera2D camera = { 0 };
+    Camera2D camera = {0};
 
     bool game_should_close = false;
 
@@ -42,23 +43,29 @@ public:
         EntityBehavior::player = &player;
         PlayerBehavior::camera = &camera;
 
-        main_menu.emplace_back(Button({240, 120, 240, 120}, [](Game& game){game.set_game_state(RUNNING);}, "play game"));
-        main_menu.emplace_back(Button({240, 120, 240, 120}, [](Game& game){game.close_window();}, "exit game"));
-        main_menu.emplace_back(Button({240, 120, 240, 120}, [](Game& game){game.set_game_state(GAME_WON);}, "fuck you"));
+        main_menu.emplace_back<Button>(Rectangle{240, 120, 240, 120}, [](Game &game) { game.set_game_state(RUNNING); },
+                                       "play game");
+        main_menu.emplace_back<Button>(Rectangle{240, 120, 240, 120}, [](Game &game) { game.set_game_state(GAME_WON); },
+                                       "fuck you");
+        main_menu.emplace_back<Button>(Rectangle{240, 120, 240, 120}, [](Game &game) { game.close_window(); },
+                                       "exit game");
+
     }
 
     void close_window() {
         game_should_close = true;
     }
 
-    void focus_entity(const std::string& entity_id);
+    void focus_entity(const std::string &entity_id);
 
     bool load_entities_from_file(std::string file_path);
 
-    void set_game_state(GameState new_state) {state = new_state;}
-    void set_dialogue(NPCBehavior* npc) {npc_behavior = npc;}
+    void set_game_state(GameState new_state) { state = new_state; }
+    void set_dialogue(NPCBehavior *npc) { npc_behavior = npc; }
 
     int run();
+
     void game_loop();
+
     void render_step();
 };

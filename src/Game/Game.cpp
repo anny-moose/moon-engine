@@ -6,15 +6,17 @@
 using json = nlohmann::json;
 
 void Game::focus_entity(const std::string &entity_id) {
-    for (auto &entity: entities) {
+    for (const auto &entity: enemies) {
         if (entity_id == entity.get_id()) {
             focused_entity = &entity;
         }
     }
     if (entity_id == player.get_id())
         focused_entity = &player;
-    else if (entity_id == joe.get_id())
-        focused_entity = &joe;
+
+    for (const auto &npc: npcs)
+        if (entity_id == npc.get_id())
+            focused_entity = &npc;
 }
 
 
@@ -52,7 +54,7 @@ void Game::game_loop() {
 
         if (state == RUNNING) {
             player.move(map);
-            for (auto &enemyIt: entities) {
+            for (auto &enemyIt: enemies) {
                 enemyIt.move(map);
             }
         }
@@ -67,37 +69,38 @@ void Game::game_loop() {
 
         if (state == RUNNING) {
             if (!player.tick(map)) set_game_state(PLAYER_DEAD);
-            bullet_manager.logic_tick(map.get_walls(), entities, player);
-            for (auto enemyIt = entities.begin(); enemyIt != entities.end();) {
+            bullet_manager.logic_tick(map.get_walls(), enemies, player);
+            for (auto enemyIt = enemies.begin(); enemyIt != enemies.end();) {
                 if (!enemyIt->tick(map))
-                    enemyIt = entities.erase(enemyIt);
+                    enemyIt = enemies.erase(enemyIt);
                 else
                     ++enemyIt;
             }
 
-            if (!joe.tick(map)) {
-                npc_behavior = nullptr;
-            }
+            for (auto &npc: npcs)
+                if (!npc.tick(map)) {
+                    npc_behavior = nullptr;
+                    focus_entity(player.get_id());
+                }
         }
-
 
 
         if (state == MENU) {
-            main_menu.set_bounds((Rectangle){10, (float)GetScreenHeight() - 200, (float)GetScreenWidth()-20, 190});
+            main_menu.set_bounds(Rectangle{static_cast<float>(GetScreenWidth())/4, static_cast<float>(GetScreenHeight())/4, static_cast<float>(GetScreenWidth())/2, static_cast<float>(GetScreenHeight())/2});
             main_menu.update_element();
         }
 
-        if (entities.empty()) state = GAME_WON;
+        if (enemies.empty()) state = GAME_WON;
 
-        const float smoothness = 0.1f;
+        const float camera_smoothness = 0.1f;
         camera.target +=
         {
             ((focused_entity->get_position().x + focused_entity->get_size().x / 2) -
              camera.target.x) *
-            smoothness,
+            camera_smoothness,
             ((focused_entity->get_position().y + focused_entity->get_size().y / 2) -
              camera.target.y) *
-            smoothness
+            camera_smoothness
         };
         camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 
@@ -117,9 +120,7 @@ void Game::render_step() {
 
         DrawText("Hello, Raylib!", 350, 280, 20, DARKGRAY);
 
-        DrawRectangle(player.get_position().x, player.get_position().y,
-                      player.get_size().x, player.get_size().y,
-                      (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color){0, 77, 4, 255});
+        DrawRectanglePro(player.get_hitbox(), {0,0}, 0, (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color){0, 77, 4, 255});
         DrawText(std::format("Health: {}", player.get_health()).c_str(),
                  player.get_position().x - 20, player.get_position().y - 20, 20, GREEN);
 
@@ -127,9 +128,8 @@ void Game::render_step() {
             DrawRectanglePro(bullet.get_hitbox(), {0, 0}, 0, WHITE);
         }
 
-        for (const auto &enemy: entities) {
-            DrawRectangle(enemy.get_position().x, enemy.get_position().y, enemy.get_size().x,
-                          enemy.get_size().y,
+        for (const auto &enemy: enemies) {
+            DrawRectanglePro(enemy.get_hitbox(), {0, 0}, 0,
                           (enemy.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
             DrawText(std::format("Health: {}", enemy.get_health()).c_str(),
                      enemy.get_position().x - 20, enemy.get_position().y - 20, 20, RED);
@@ -139,13 +139,13 @@ void Game::render_step() {
             DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
         }
 
-        DrawRectanglePro(joe.get_hitbox(), {0, 0}, 0, BLUE);
+        for (const auto &npc: npcs)
+            DrawRectanglePro(npc.get_hitbox(), {0, 0}, 0, GRAY);
 
         EndMode2D();
 
         if (npc_behavior != nullptr)
             npc_behavior->draw_dialogue();
-
     } else if (state == PLAYER_DEAD) {
         DrawText("you losar", 350, 280, 80, DARKGRAY);
     } else if (state == GAME_WON) {
@@ -172,13 +172,23 @@ bool Game::load_entities_from_file(std::string file_path) {
                         data["player"]["position"][1].template get<float>() * 50
                     }, "player");
 
-    entities.clear();
+    enemies.clear();
 
     for (auto it: data["entities"])
-        entities.emplace_back(Entity(
+        enemies.emplace_back(Entity(
             std::make_unique<EnemyBehavior>((it["type"] == "warding") ? EnemyType::WARDEN : EnemyType::NORMAL), {
                 it["position"][0].template get<float>() * 50, it["position"][1].template get<float>() * 50
             }, it["id"], DEFAULT_ENTITY_SIZE_PX, it["health"]));
+
+    for (auto it : data["npcs"]) {
+        std::vector<std::pair<std::string, std::string>> dialogue;
+        for (auto entry : it["dialogue"]) {
+            dialogue.push_back({entry["who"], entry["what"]});
+        }
+
+        npcs.emplace_back(Entity(std::make_unique<NPCBehavior>(dialogue), {it["position"][0].template get<float>() * 50, it["position"][1].template get<float>() * 50},
+            it["id"]));
+    }
 
     return true;
 }
