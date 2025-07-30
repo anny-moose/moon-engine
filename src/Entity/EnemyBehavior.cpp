@@ -30,7 +30,7 @@ bool EnemyBehavior::tick(Entity &self, GameMap &map) {
     // Check whether we do v
     if (Vector2Distance(self.get_position() + self.get_size() / 2, player_center) < line_of_sight_length) {
         for (const auto &wall: map.get_walls())
-            if (wall.CheckCollisionLine(player_center, self.get_position()))
+            if (wall.CheckCollisionLineDiag(player_center, self.get_position()))
                 can_shoot_player = false;
     } else {
         can_shoot_player = false;

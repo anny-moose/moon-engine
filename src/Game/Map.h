@@ -5,7 +5,7 @@
 
 typedef struct Wall {
     Rectangle bound;
-    bool CheckCollisionLine(Vector2 p1, Vector2 p2) const;
+    [[nodiscard]] bool CheckCollisionLineDiag(Vector2 p1, Vector2 p2) const;
 } Wall;
 
 
