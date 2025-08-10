@@ -1,4 +1,5 @@
 #pragma once
+#include "Light.h"
 #include "raylib.h"
 #include "../Entity/Entity.h"
 #include "../Entity/Bullet.h"
@@ -33,6 +34,8 @@ private:
 
     Camera2D camera = {0};
 
+    Light* player_light = nullptr;
+
     bool game_should_close = false;
 
 public:
@@ -46,7 +49,7 @@ public:
         main_menu.emplace_back<Button>(Rectangle{240, 120, 240, 120}, [](Game &game) { game.set_game_state(RUNNING); },
                                        "play game");
         main_menu.emplace_back<Button>(Rectangle{240, 120, 240, 120}, [](Game &game) { game.set_game_state(GAME_WON); },
-                                       "fuck you");
+                                       "family-friendly button");
         main_menu.emplace_back<Button>(Rectangle{240, 120, 240, 120}, [](Game &game) { game.close_window(); },
                                        "exit game");
 

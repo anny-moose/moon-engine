@@ -3,6 +3,7 @@
 #include <fstream>
 #include "UI/UIElement.h"
 #include "../../lib/json.hpp"
+#include "Light.h"
 using json = nlohmann::json;
 
 void Game::focus_entity(const std::string &entity_id) {
@@ -32,25 +33,40 @@ int Game::run() {
     map.load_map_from_file("map.json");
     load_entities_from_file("entities.json");
 
+    Light light = Light{player.get_position().x, player.get_position().y, 2000.0f, camera};
+    player_light = &light;
+
     camera.target = {
-        focused_entity->get_position().x + focused_entity->get_size().x / 2,
-        focused_entity->get_position().y + focused_entity->get_size().y / 2
-    };
+                                                                                     focused_entity->get_position().x + focused_entity->get_size().x / 2,
+                                                                                     focused_entity->get_position().y + focused_entity->get_size().y / 2
+                                                                                 };
     camera.offset = {SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f};
     camera.zoom = 1.0f;
+
+    player_light->MoveLight(player.get_position().x, player.get_position().y);
 
     HideCursor();
 
     game_loop();
 
+    player_light->UnloadRenderMask();
 
     CloseWindow();
     return 0;
 }
 
 void Game::game_loop() {
+    Vector2 resolution = {(float)GetRenderWidth(), (float)GetRenderHeight()};
+    Vector2 current_res = resolution;
+    bool resolution_changed = false;
     while (!game_should_close && !WindowShouldClose()) {
         // Events
+        resolution_changed = false;
+        current_res = {(float)GetRenderWidth(), (float)GetRenderHeight()};
+        if (current_res != resolution) {
+            resolution = current_res;
+            resolution_changed = true;
+        }
 
         if (state == RUNNING) {
             player.move(map);
@@ -86,7 +102,8 @@ void Game::game_loop() {
 
 
         if (state == MENU) {
-            main_menu.set_bounds(Rectangle{static_cast<float>(GetScreenWidth())/4, static_cast<float>(GetScreenHeight())/4, static_cast<float>(GetScreenWidth())/2, static_cast<float>(GetScreenHeight())/2});
+            if (resolution_changed)
+                main_menu.set_bounds(Rectangle{static_cast<float>(GetScreenWidth())/4, static_cast<float>(GetScreenHeight())/4, static_cast<float>(GetScreenWidth())/2, static_cast<float>(GetScreenHeight())/2});
             main_menu.update_element();
         }
 
@@ -104,14 +121,17 @@ void Game::game_loop() {
         };
         camera.offset = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 
+        player_light->UpdateLight(map.get_walls(), resolution_changed);
+        player_light->MoveLight(player.get_position().x+(player.get_size().x/2), player.get_position().y+(player.get_size().y/2));
 
         render_step();
+
     }
 }
 
 void Game::render_step() {
     BeginDrawing();
-    ClearBackground(BLACK);
+    ClearBackground(SKYBLUE);
 
     if (state == MENU) {
         main_menu.draw_element();
@@ -124,6 +144,7 @@ void Game::render_step() {
         DrawText(std::format("Health: {}", player.get_health()).c_str(),
                  player.get_position().x - 20, player.get_position().y - 20, 20, GREEN);
 
+
         for (const auto &bullet: *bullet_manager.get_bullets()) {
             DrawRectanglePro(bullet.get_hitbox(), {0, 0}, 0, WHITE);
         }
@@ -135,13 +156,16 @@ void Game::render_step() {
                      enemy.get_position().x - 20, enemy.get_position().y - 20, 20, RED);
         }
 
-        for (const auto &wall: map.get_walls()) {
-            DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
-        }
-
         for (const auto &npc: npcs)
             DrawRectanglePro(npc.get_hitbox(), {0, 0}, 0, GRAY);
 
+
+        // for (const auto &wall: map.get_walls()) {
+        //     DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
+        // }
+
+
+        player_light->RenderLightMask();
         EndMode2D();
 
         if (npc_behavior != nullptr)
