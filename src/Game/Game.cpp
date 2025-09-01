@@ -93,11 +93,13 @@ void Game::game_loop() {
                     ++enemyIt;
             }
 
-            for (auto &npc: npcs)
+            for (auto &npc: npcs) {
+                npc.move(map);
                 if (!npc.tick(map)) {
                     npc_behavior = nullptr;
                     focus_entity(player.get_id());
                 }
+            }
         }
 
 
@@ -129,6 +131,14 @@ void Game::game_loop() {
     }
 }
 
+static void draw_crosshair(const Entity &player) {
+    const float reload_offset = 2;
+    float size_adj = 1 + player.get_reload_clock()*reload_offset;
+    float size = 12 * ((size_adj >= 1) ? size_adj : 1);
+
+    DrawRectangle(GetMousePosition().x - size/2, GetMousePosition().y - size/2, size, size, WHITE);
+}
+
 void Game::render_step() {
     BeginDrawing();
     ClearBackground(SKYBLUE);
@@ -140,25 +150,18 @@ void Game::render_step() {
 
         DrawText("Hello, Raylib!", 350, 280, 20, DARKGRAY);
 
-        DrawRectanglePro(player.get_hitbox(), {0,0}, 0, (player.get_invulnerability_time() < 0) ? DARKGREEN : (Color){0, 77, 4, 255});
-        DrawText(std::format("Health: {}", player.get_health()).c_str(),
-                 player.get_position().x - 20, player.get_position().y - 20, 20, GREEN);
-
+        player.draw();
 
         for (const auto &bullet: *bullet_manager.get_bullets()) {
             DrawRectanglePro(bullet.get_hitbox(), {0, 0}, 0, WHITE);
         }
 
         for (const auto &enemy: enemies) {
-            DrawRectanglePro(enemy.get_hitbox(), {0, 0}, 0,
-                          (enemy.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
-            DrawText(std::format("Health: {}", enemy.get_health()).c_str(),
-                     enemy.get_position().x - 20, enemy.get_position().y - 20, 20, RED);
+            enemy.draw();
         }
 
         for (const auto &npc: npcs)
-            DrawRectanglePro(npc.get_hitbox(), {0, 0}, 0, GRAY);
-
+            npc.draw();
 
         // for (const auto &wall: map.get_walls()) {
         //     DrawRectanglePro(wall.bound, {0, 0}, 0, BLUE);
@@ -176,7 +179,7 @@ void Game::render_step() {
         DrawText("you winrar", 350, 280, 80, DARKGRAY);
     }
 
-    DrawRectangle(GetMousePosition().x - 12, GetMousePosition().y - 12, 24, 24, WHITE);
+    draw_crosshair(player);
 
     EndDrawing();
 }
@@ -211,7 +214,7 @@ bool Game::load_entities_from_file(std::string file_path) {
         }
 
         npcs.emplace_back(Entity(std::make_unique<NPCBehavior>(dialogue), {it["position"][0].template get<float>() * 50, it["position"][1].template get<float>() * 50},
-            it["id"]));
+            it["id"], DEFAULT_ENTITY_SIZE_PX, 5, 10, 50));
     }
 
     return true;

@@ -5,6 +5,7 @@
 #include "../Entity/Bullet.h"
 #include "Map.h"
 #include "UI/UIElement.h"
+#include <algorithm>
 
 typedef enum {
     MENU = 0,
@@ -60,6 +61,14 @@ public:
     }
 
     void focus_entity(const std::string &entity_id);
+    void turn_npc_into_enemy(Entity& npc) {
+        npc.set_behavior(std::make_unique<EnemyBehavior>());
+        auto it = std::find(npcs.begin(), npcs.end(), npc);
+        if (it != npcs.end()) {
+            enemies.push_back(std::move(npc));
+            npcs.erase(it);
+        }
+    }
 
     bool load_entities_from_file(std::string file_path);
 

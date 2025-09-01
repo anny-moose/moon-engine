@@ -1,3 +1,4 @@
+#include <format>
 #include <mutex>
 
 #include "Entity.h"
@@ -45,4 +46,12 @@ bool EnemyBehavior::tick(Entity &self, GameMap &map) {
 
     locked_on_timer -= GetFrameTime();
     return true;
+}
+
+void EnemyBehavior::draw(const Entity &self) {
+
+    DrawRectanglePro(self.get_hitbox(), {0, 0}, 0,
+                  (self.get_invulnerability_time() < 0) ? RED : (Color){190, 1, 15, 255});
+    DrawText(std::format("Health: {}", self.get_health()).c_str(),
+             self.get_position().x - 20, self.get_position().y - 20, 20, RED);
 }

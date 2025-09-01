@@ -1,3 +1,5 @@
+#include <format>
+
 #include "Entity.h"
 #include "../Game/Game.h"
 
@@ -53,4 +55,11 @@ bool PlayerBehavior::tick(Entity &self, GameMap &map) {
         self.set_health(self.get_max_health());
 
     return true;
+}
+
+
+void PlayerBehavior::draw(const Entity &self) {
+    DrawRectanglePro(self.get_hitbox(), {0,0}, 0, (self.get_invulnerability_time() < 0) ? DARKGREEN : (Color){0, 77, 4, 255});
+    DrawText(std::format("Health: {}", self.get_health()).c_str(),
+             self.get_position().x - 20, self.get_position().y - 20, 20, GREEN);
 }

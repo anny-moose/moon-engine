@@ -11,6 +11,11 @@ bool NPCBehavior::tick(Entity &self, GameMap &map) {
 
     if (talking) {
         timer -= GetFrameTime();
+        if (current_dialogue->first == "action")
+            if (current_dialogue->second == "become_enemy") {
+                self.get_game().turn_npc_into_enemy(self);
+                return talking = false;
+            }
         self.get_game().focus_entity(current_dialogue->first);
         if (IsKeyPressed(KEY_E)) {
             if (timer <= 0.0f) {
@@ -37,4 +42,8 @@ bool NPCBehavior::tick(Entity &self, GameMap &map) {
 
 void NPCBehavior::draw_dialogue() {
     box.draw_element();
+}
+
+void NPCBehavior::draw(const Entity &self) {
+    DrawRectanglePro(self.get_hitbox(), {0, 0}, 0, GRAY);
 }
