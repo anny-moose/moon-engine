@@ -1,0 +1,86 @@
+{
+  "player": {
+    "position": [5,11],
+    "health": 100
+  },
+  "entities": [
+    {
+      "position": [15,2],
+      "health": 100,
+      "id": "joker",
+      "type": "normal"
+    },
+    {
+      "position": [15,4],
+      "health": 100,
+      "id": "",
+      "type": "normal"
+    },
+    {
+      "position": [19,-2],
+      "health": 5,
+      "id": "enemy",
+      "type": "warding"
+    },
+    {
+      "position": [27,-7],
+      "health": 5,
+      "id": "enemy1",
+      "type": "warding"
+    },
+    {
+      "position": [19,-11],
+      "health": 5,
+      "id": "enemy2",
+      "type": "warding"
+    }
+  ],
+  "npcs" : [
+    {
+      "position": [2, 2],
+      "id": "john",
+      "dialogue": [
+        {
+          "who": "john",
+          "what": "yo twin"
+        },
+        {
+          "who": "john",
+          "what": "fuck you twin."
+        },
+        {
+          "who": "action",
+          "what": "become_enemy"
+        },
+        {
+          "who": "player",
+          "what": "yea yea"
+        },
+        {
+          "who": "john",
+          "what": "cash money"
+        },
+        {
+          "who": "player",
+          "what": "so like what can you do"
+        },
+        {
+          "who": "john",
+          "what": "nothing"
+        },
+        {
+          "who": "player",
+          "what": "awe damn it"
+        },
+        {
+          "who": "joker",
+          "what": "well that's not cool"
+        },
+        {
+          "who": "action",
+          "what": "become_enemy"
+        }
+      ]
+    }
+  ]
+}
